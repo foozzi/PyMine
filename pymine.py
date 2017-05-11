@@ -1,17 +1,16 @@
 import sys
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QMessageBox, QDialog
 import os
 import main
 import add
 import mcrcon
 import string
-from time import gmtime, strftime
-import threading
+from time import gmtime, strftime, sleep
 
 class MainWindow(QtWidgets.QMainWindow):        
 
-    rcon = None
+    rcon = None    
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -144,21 +143,24 @@ class MainWindow(QtWidgets.QMainWindow):
         return
         
     def connect_rcon(self) : 
-        server_data = str(self.ui.comboBox.currentText()).split(':')
-        if len(server_data) < 3:
-            self.error_modal('Проверьте правильность настроек сервера.', 'Не хватает данных')
-            return        
+        if self.rcon == None:
+            print('df')
+            server_data = str(self.ui.comboBox.currentText()).split(':')
+            if len(server_data) < 3:
+                self.error_modal('Проверьте правильность настроек сервера.', 'Не хватает данных')
+                return            
         
-        try:
-            self.rcon = mcrcon.MCRcon(server_data[0],int(server_data[1]),server_data[2])
-        except Exception as err:
-            self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Ошибка подключения к ' + server_data[0])
-            self.error_modal(err, 'Ошибка подключения')
-            return
-        
-        self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Подключено к ' + server_data[0])                
-        self.init_players()
-        #print(self.rcon.test())
+            try:
+                self.rcon = mcrcon.MCRcon(server_data[0],int(server_data[1]),server_data[2])
+                self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Подключено к ' + server_data[0]) 
+                t1.start()   
+            except Exception as err:
+                self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Ошибка подключения к ' + server_data[0])
+                self.error_modal('Ошибка подключения', 'Ошибка')
+                return            
+        else:                               
+            self.init_players()                 
+            #print(self.rcon.test())
         
     def init_players(self) :
         players = self.run_command('list')
@@ -220,10 +222,17 @@ class AddServer(QtWidgets.QDialog) :
         self.parent().ui.comboBox.addItems([self.tr(server_address)+':'+self.tr(server_password)])
         self.close()
                 
+class Tasks(QtCore.QThread): 
+	def run(self):
+		while True:
+			my_mainWindow.refresh_connect()
+			print('fgf')
+			sleep(3)
 
 app = QtWidgets.QApplication(sys.argv)
 
 my_mainWindow = MainWindow()
+t1 = Tasks()
 my_mainWindow.show()
 
 sys.exit(app.exec_())
