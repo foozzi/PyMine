@@ -4,7 +4,7 @@ Basic useful feature list:
 
  * weather
  * crative/survival mode for all and only one user
- * user list (without update, it's in dev.)
+ * user list and update user list (multithreading)
  * admin mode/, ban mode/, xp up/ and others...
 
 ### Screenshots
