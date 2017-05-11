@@ -10,7 +10,9 @@ from time import gmtime, strftime, sleep
 
 class MainWindow(QtWidgets.QMainWindow):        
 
-    rcon = None    
+    rcon = None
+    ip_server = None
+    enable_features_status = False
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -142,10 +144,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     file.close()                             
         return
         
-    def connect_rcon(self) : 
-        if self.rcon == None:
-            print('df')
-            server_data = str(self.ui.comboBox.currentText()).split(':')
+    def connect_rcon(self, new=False) :               
+        if self.rcon == None or new == False:                       
+            server_data = str(self.ui.comboBox.currentText()).split(':')        
             if len(server_data) < 3:
                 self.error_modal('Проверьте правильность настроек сервера.', 'Не хватает данных')
                 return            
@@ -153,20 +154,22 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.rcon = mcrcon.MCRcon(server_data[0],int(server_data[1]),server_data[2])
                 self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Подключено к ' + server_data[0]) 
+                self.ip_server = server_data[0]
+                self.init_players()                
+                self.enable_features()
                 t1.start()   
             except Exception as err:
                 self.ui.plainTextEdit.appendPlainText('['+strftime("%Y-%m-%d %H:%M:%S", gmtime())+']Ошибка подключения к ' + server_data[0])
                 self.error_modal('Ошибка подключения', 'Ошибка')
                 return            
         else:                               
-            self.init_players()                 
+            self.init_players()
             #print(self.rcon.test())
         
     def init_players(self) :
         players = self.run_command('list')
         players = players.split(':')
-        if(len(players) >= 2):
-            self.enable_features()
+        if(len(players) >= 2):            
             self.ui.comboBox_2.clear()
             players = players[1].split(',')
             for p in players:
@@ -188,22 +191,24 @@ class MainWindow(QtWidgets.QMainWindow):
         msg.exec_()
         
     def refresh_connect(self) : 
-        self.connect_rcon()
+        self.connect_rcon(True)
         
     def enable_features(self) :
-        self.ui.pushButton_5.setEnabled(True)
-        self.ui.pushButton_14.setEnabled(True)
-        self.ui.pushButton_15.setEnabled(True)
-        self.ui.tab_2.setEnabled(True)
-        
-        self.ui.pushButton_6.clicked.connect(self.give_10_xp)
-        self.ui.pushButton_7.clicked.connect(self.give_creative)
-        self.ui.pushButton_8.clicked.connect(self.ungive_creative)
-        self.ui.pushButton_9.clicked.connect(self.give_ban)
-        self.ui.pushButton_10.clicked.connect(self.ungive_ban)
-        self.ui.pushButton_11.clicked.connect(self.give_admin)
-        self.ui.pushButton_12.clicked.connect(self.ungive_admin)
-        self.ui.pushButton_13.clicked.connect(self.kick_player)
+        if self.enable_features_status == False:
+            self.enable_features_status = True
+            self.ui.pushButton_5.setEnabled(True)
+            self.ui.pushButton_14.setEnabled(True)
+            self.ui.pushButton_15.setEnabled(True)
+            self.ui.tab_2.setEnabled(True)
+            
+            self.ui.pushButton_6.clicked.connect(self.give_10_xp)
+            self.ui.pushButton_7.clicked.connect(self.give_creative)
+            self.ui.pushButton_8.clicked.connect(self.ungive_creative)
+            self.ui.pushButton_9.clicked.connect(self.give_ban)
+            self.ui.pushButton_10.clicked.connect(self.ungive_ban)
+            self.ui.pushButton_11.clicked.connect(self.give_admin)
+            self.ui.pushButton_12.clicked.connect(self.ungive_admin)
+            self.ui.pushButton_13.clicked.connect(self.kick_player)
                 
 class AddServer(QtWidgets.QDialog) :
     def __init__(self, parent):
@@ -213,7 +218,7 @@ class AddServer(QtWidgets.QDialog) :
         
         self.ui.pushButton.clicked.connect(self.add_item)
         
-    def add_item(self) :
+    def add_item(self):
         server_address = self.ui.lineEdit.text()
         server_password = self.ui.lineEdit_2.text()
         with open('./servers', 'a') as file:
@@ -223,11 +228,13 @@ class AddServer(QtWidgets.QDialog) :
         self.close()
                 
 class Tasks(QtCore.QThread): 
-	def run(self):
-		while True:
-			my_mainWindow.refresh_connect()
-			print('fgf')
-			sleep(3)
+    def run(self):
+        i = 0
+        while True:
+            my_mainWindow.refresh_connect()
+            print(i)
+            i = i + 1
+            sleep(3)
 
 app = QtWidgets.QApplication(sys.argv)
 
