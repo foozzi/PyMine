@@ -2,10 +2,11 @@ import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QMessageBox, QDialog
 import os
+#templates
 import main
 import add
+#end
 import mcrcon
-import string
 from time import gmtime, strftime, sleep
 
 class MainWindow(QtWidgets.QMainWindow):        
